@@ -1,0 +1,8 @@
+#vscode files
+.vscode
+# output files
+bin
+# test files
+configs
+server2client
+filters
