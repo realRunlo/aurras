@@ -19,51 +19,80 @@ void dec_runing(Filter f){
 }
 
 void set_name(Filter f,char * name){
-    
-    f->name = strdup(name);
+    if(f != NULL && name != NULL)
+        f->name = strdup(name);
 }
 
 void set_exec_name(Filter f,char * execName){
-    f->exec_name = strdup(execName);
+    if(f != NULL && execName != NULL) 
+        f->exec_name = strdup(execName);
 }
 
 void set_f_runing(Filter f ,int runing){
-    f->f_runing = runing;
+    if(f != NULL)
+        f->f_runing = runing;
 }
 
 void set_max(Filter f,int max){
-    f->max = max;
+    if(f != NULL)
+        f->max = max;
 }
 
 char * get_name(Filter f){
-    return strdup(f->name);
+    return f != NULL ? strdup(f->name) : NULL;
 }
 
 char * get_exec_name(Filter f){
-    return strdup(f->exec_name);
+    return f != NULL ? strdup(f->exec_name) : NULL;
 }
 
 int get_f_runing(Filter f){
-    return f->f_runing;
+    return f != NULL ? f->f_runing : -1;
 }
 
 int get_max(Filter f){
-    return f->max;
+    return f != NULL ? f->max : -1;
 }
 
-Filter initF(char * line){
-
-    char * linecpy = strdup(line);
-    Filter f = malloc(sizeof(struct filter));
-    f->name = strdup(strsep(&linecpy," "));
-    f->exec_name = strdup(strsep(&linecpy," "));
-    f->f_runing = 0;
-    f->max = atoi(strsep(&linecpy,"\n"));
+Filter initFilter(char * name, char *exec_name, int max) {
+    Filter f = NULL;
+    
+    if(name != NULL && exec_name != NULL) {
+        f = malloc(sizeof(struct filter));
+        set_name(f, name);
+        set_exec_name(f, exec_name);
+        set_f_runing(f, 0);
+        set_max(f, max);
+    }
 
     return f;
 }
+
+Filter initFFromLine(char * line){
+    Filter f = NULL;
+    char *linecpy = NULL;
+    char *tmp = NULL;
+    char *name = NULL;
+    char *exec_name = NULL;
+    int max = 0;
+
+    if(line != NULL) {
+        linecpy = strdup(line);
+        tmp = linecpy;
+
+        name = strsep(&linecpy," ");
+        exec_name = strsep(&linecpy," ");
+        max = atoi(strsep(&linecpy,"\n"));
+        f = initFilter(name, exec_name, max);
+
+        if(tmp != NULL)
+            free(tmp);
+    }
+    return f;
+}
+
 void update_runingFilters(List filters,Task t,int op){ // op -> 0 add runing | 1 dec running
-    Request req = getRequest(t);
+    Request req = get_task_request(t);
     char * line = getCommand(req);
     strsep(&line,";"); //transform
     strsep(&line,";"); //input
@@ -71,7 +100,7 @@ void update_runingFilters(List filters,Task t,int op){ // op -> 0 add runing | 1
     char * seped;
     while((seped = strsep(&line,";"))){
         for(int i = 0;i<get_sizel(filters);i++){
-            Filter f = getValue(filters,i);
+            Filter f = (Filter) getValue(filters,i);
             if(strcmp(f->name,seped)==0){
                 if(op==0){
                     inc_runing(f);
@@ -96,7 +125,7 @@ int canUse_filter(List filters,char * f_name){
 }
 
 void show_filter(Filter f){
-    printf("filter %s: %d/%d (running/max)\n\0",get_name(f),get_f_runing(f),get_max(f));
+    printf("filter %s: %d/%d (running/max)\n",get_name(f),get_f_runing(f),get_max(f));
 }
 
 void show_filterList(List f_list){

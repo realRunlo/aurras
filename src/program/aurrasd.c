@@ -11,7 +11,7 @@
 #include "model/task.h"
 
 int canRun(Task t,List filters){
-    Request req = getRequest(t);
+    Request req = get_task_request(t);
     char * line = getCommand(req);
     strsep(&line," "); //transform
     strsep(&line," "); //input
@@ -29,8 +29,8 @@ int canRun(Task t,List filters){
 /* Server, to run server ./aurrasd config-filename filter-folder*/
 int main(int argc,char * argv[]){
     List filters; 
-    List waiting_queque;
-    List runing_queque;
+    List waiting_queque = NULL;
+    List runing_queque = NULL;
     int task_counter = 1;
     int r_size;
     char * filters_folder;
@@ -44,17 +44,12 @@ int main(int argc,char * argv[]){
     /* init the server */
     filters = load_server_configs(argv[1]); // load the the filters in the configs file to a list
     filters_folder = strdup(argv[2]); // save the execs folders name
-    
-    waiting_queque = initList(); // queque
-
-    runing_queque = initList(); 
-
-    printf("Server online\n");
 
     if(mkfifo("client2server",0666) == -1){ // create pipe for READING clients requests
         perror("client2server");
     }
 
+    printf("Server online\n");
 
     c2s_pipe = open("client2server", O_RDONLY); // open pipe for READING clients requests
 
@@ -74,12 +69,12 @@ int main(int argc,char * argv[]){
             task_counter++;
 
             s2c_pipe = open(getId(req),O_WRONLY);
-            waiting_queque = push(waiting_queque,t);
+            waiting_queque = push(&waiting_queque,t);
             write(s2c_pipe,"pending\n",12);
 
             if(canRun(t,filters)){
                 t = (Task) getValue(waiting_queque,0);
-                runing_queque = push(runing_queque,t); // add to the runing queque
+                runing_queque = push(&runing_queque,t); // add to the runing queque
                 waiting_queque = pop(waiting_queque); // remove from waiting
                 update_runingFilters(filters,t,0);
                 
@@ -89,7 +84,7 @@ int main(int argc,char * argv[]){
                     perror("fork");
                     break;
                 case 0:
-                    req = getRequest(t);
+                    req = get_task_request(t);
                     write(s2c_pipe,"processing...",14);
                     //execs etc....
 

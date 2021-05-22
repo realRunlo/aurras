@@ -10,12 +10,34 @@ struct nodo{
 
 };
 
-/* ------public------ */
+static void set_l_value(List l, void *value) {
+    if(l != NULL && value != NULL)
+        l->value = value;
+}
 
-List initList(){
-    List new_list =  malloc(sizeof(struct nodo));
-    new_list->next = NULL;
-    return new_list;
+static void set_l_next(List l, List next) {
+    if(l != NULL)
+        l->next = next;
+}
+
+/* ------public------ */
+void *get_l_value(List l) {
+    return l != NULL ? l->value : NULL;
+}
+
+List *get_l_next(List l) {
+    return l != NULL ? &(l->next) : NULL;
+}
+
+List initList(void *value) {
+    List l = NULL;
+
+    if(value != NULL) {
+        l = malloc(sizeof(struct nodo));
+        set_l_value(l, value);
+        set_l_next(l, NULL);
+    }
+    return l;
 }
 
 /**
@@ -24,26 +46,21 @@ List initList(){
  * @param l 
  * @param new_value 
  */
-List push(List l,void * new_value){
-    List head = l;
-    if(l==NULL){
-        l = malloc(sizeof(struct nodo));
-        l->value = new_value;
-        l->next = NULL;
-    }else{
-        List new_nodo = malloc(sizeof(struct nodo));
-        new_nodo->value = new_value;
-        new_nodo->next = NULL;
-        for(;l->next;l=l->next);
-        l->next = new_nodo;
-    }
+List push(List *l,void * new_value){
+    List new_nodo = NULL;
+    List *tmp = l;
 
-    return head;
+    new_nodo = initList(new_value);
+
+    for(;*tmp != NULL;tmp = get_l_next(*tmp));
+    *tmp = new_nodo;
+
+    return *l;
 }
 
 List pop(List l){
     if(l!=NULL){
-        List new_list = l->next;
+        List new_list = *get_l_next(l);
         free(l);
         return new_list;
     }
@@ -52,15 +69,15 @@ List pop(List l){
 
 int get_sizel(List l){
     int i;
-    for(i=0;l->next;l=l->next,i++);
+    for(i=0;l != NULL;l= *get_l_next(l),i++);
 
     return i;
 }
 
 void * getValue(List l,int pos){
-    for(int i=0;l->next && i<=pos;l = l->next,i++);
+    for(int i=0;l != NULL && i<pos;l = *get_l_next(l),i++);
 
-    return l->value;
+    return get_l_value(l);
 }
 
 

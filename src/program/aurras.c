@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include "model/request.h"
 
+#define BUFFSIZE 1024
 
 
 /* Client, to run client ./aurras -> show how to use, ./aurras status -> show status , ./aurras transform [....] -> submit request */
@@ -13,6 +14,8 @@ int main(int argc,char * argv[]){
     int size_read;
     char pid[50];
     char * request_message;
+    char buff[BUFFSIZE];
+
     sprintf(pid,"%d",getpid());
 
     if(argc==1){
@@ -28,7 +31,7 @@ int main(int argc,char * argv[]){
         _exit(1);
     }
 
-    if(strcmp(argv[1],"transform") ==0 && argc < 5){
+    if(strcmp(argv[1],"transform") == 0 && argc < 5){
         printf("Not enougth arguments\n");
     }
 
@@ -50,13 +53,9 @@ int main(int argc,char * argv[]){
     int s2c_pipe = open(pid,O_RDONLY); // opens pipe for READING anwser from the server
 
     
-    char buff[1024];
-    while((size_read = read(s2c_pipe,&buff,1024))!=0){
+    while((size_read = read(s2c_pipe,&buff,BUFFSIZE)) != EOF){
        write(1,buff,size_read);
     }
 
-    
-
-   
     return 0;
 }

@@ -41,17 +41,17 @@ List load_server_configs(char * filename){
         _exit(1);
     }
 
-    List configs = initList();
+    List configs = NULL;
     char buffer[1024];
+    
     int size_read;
-    while((size_read = readln(fd,&buffer,1024) ) > 0){
-       Filter f = initF(buffer);
-       configs = push(configs,f);
+    while((size_read = readln(fd,buffer,1024) ) > 0){
+       Filter f = initFFromLine(buffer);
+       configs = push(&configs,f);
     }
 
     close(fd);
     return configs;
-
 }
 
 

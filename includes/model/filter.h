@@ -31,6 +31,6 @@ void show_filter(Filter f);
 
 void show_filterList(List f);
 
-Filter initF(char * line);
+Filter initFFromLine(char * line);
 
 #endif //___filter_h___

@@ -6,7 +6,7 @@ typedef struct nodo * List;
 
 List initList();
 
-List push(List l,void * new_value);
+List push(List *l,void * new_value);
 
 List pop(List l);
 
