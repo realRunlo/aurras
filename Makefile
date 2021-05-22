@@ -1,4 +1,4 @@
-FLAGS= -std=c99 -D_GNU_SOURCE -I$(INCLUDES) -Wall -O3 -g
+FLAGS= -std=c99 -D_GNU_SOURCE -I$(INCLUDES) -Wall -g
 COMPILER=gcc
 INCLUDES=includes
 SRC=src
@@ -57,4 +57,4 @@ memcheck:
 	valgrind --leak-check=yes $(OUT)/$(CLIENT)
 
 clean:
-	rm -rf $(OUT)/$(SERVER) $(OUT)/$(CLIENT) $(OUT)/$(OBJ)
+	rm -rf $(OUT)/$(SERVER) $(OUT)/$(CLIENT) $(OBJ)
