@@ -4,11 +4,11 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "../includes/reading.h"
-#include "../includes/structs.h"
-#include "../includes/request.h"
-#include "../includes/filter.h"
-#include "../includes/task.h"
+#include "model/reading.h"
+#include "model/structs.h"
+#include "model/request.h"
+#include "model/filter.h"
+#include "model/task.h"
 
 int canRun(Task t,List filters){
     Request req = getRequest(t);

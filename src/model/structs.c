@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include "../includes/structs.h"
-#include "../includes/filter.h"
+#include "model/structs.h"
+#include "model/filter.h"
 
 /* ------private------ */
 struct nodo{

@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "../includes/filter.h"
+#include "model/filter.h"
 
 struct filter{
     char * name;

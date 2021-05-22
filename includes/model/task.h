@@ -1,7 +1,7 @@
 #ifndef ___task_h___  
 #define ___task_h___
 
-#include "../includes/structs.h"
+#include "model/structs.h"
 
 
 typedef struct task * Task;

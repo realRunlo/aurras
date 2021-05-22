@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "../includes/filter.h"
-#include "../includes/reading.h"
+#include "model/filter.h"
+#include "model/reading.h"
 
 int read_char(int fd,char *c){
 

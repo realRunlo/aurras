@@ -1,7 +1,7 @@
 #ifndef ___reading_h___  
 #define ___reading_h___
 
-#include "structs.h"
+#include "model/structs.h"
 
 List load_server_configs(char * filename);
 

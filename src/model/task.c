@@ -1,6 +1,5 @@
-
-#include "../includes/request.h"
-#include "../includes/task.h"
+#include "model/request.h"
+#include "model/task.h"
 #include <stdio.h>
 #include <stdlib.h>
 

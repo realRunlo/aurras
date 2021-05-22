@@ -1,9 +1,9 @@
 #ifndef ___filter_h___  
 #define ___filter_h___
 
-#include "structs.h"
-#include "../includes/request.h"
-#include "../includes/task.h"
+#include "model/structs.h"
+#include "model/request.h"
+#include "model/task.h"
 
 typedef struct filter * Filter;
 
