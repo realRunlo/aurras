@@ -9,6 +9,8 @@
 #include "model/request.h"
 #include "model/filter.h"
 #include "model/task.h"
+#include <signal.h>
+
 
 int canRun(Task t,List filters){
     Request req = get_task_request(t);
@@ -22,7 +24,6 @@ int canRun(Task t,List filters){
             return 0;
         }
     }
-
     return 1;
 }
 
@@ -53,17 +54,23 @@ int main(int argc,char * argv[]){
 
     c2s_pipe = open("client2server", O_RDONLY); // open pipe for READING clients requests
 
+
+    open("client2server", O_WRONLY);//keeps the server open without clients
+                                    //better then using >= in while cicle for ressons explained in class
+
+
     char buffer[1024];
 
-    while((r_size = read(c2s_pipe,&buffer,1024)) >= 0){
+    while((r_size = read(c2s_pipe,&buffer,1024)) > 0){
 
-        Request req = toReq(buffer);
+        Request req = toReq(buffer); //read request from the pipe
         if(strcmp(getCommand(req),"status") == 0 ){
             s2c_pipe = open(getId(req),O_WRONLY);
             dup2(s2c_pipe,1);
             show_taskList(runing_queque);
             show_filterList(filters);
             close(s2c_pipe);
+            kill(atoi(getId(req)),SIGINT); //closes client after printing status
         }else{
             Task t = create_task(task_counter,req);
             task_counter++;
@@ -77,6 +84,7 @@ int main(int argc,char * argv[]){
                 runing_queque = push(&runing_queque,t); // add to the runing queque
                 waiting_queque = pop(waiting_queque); // remove from waiting
                 update_runingFilters(filters,t,0);
+                update_runingFilters(filters,t,1);
                 
                 switch (fork())
                 {
@@ -87,10 +95,11 @@ int main(int argc,char * argv[]){
                     req = get_task_request(t);
                     write(s2c_pipe,"processing...",14);
                     //execs etc....
-
-                    update_runingFilters(filters,t,1);
-                    //runing_queque = pop(runing_queque);
+                    sleep(10);
+                    runing_queque = pop(runing_queque);
+ 
                 default:
+              
                     // children will exec so doesnt need waiting
                     break;
                 }

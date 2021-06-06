@@ -2,6 +2,7 @@
 #include "model/task.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct task{
 
@@ -37,7 +38,13 @@ int get_task_number(Task t){
 }
 
 void show_task(Task t){
-    printf("task #%d: %s\n",get_task_number(t),getCommand(get_task_request(t)));
+    char * comand = getCommand(get_task_request(t));
+    printf("task #%d: ",get_task_number(t));
+    char * seped;
+    while((seped=strsep(&comand,";"))){
+        printf("%s ",seped);
+    }
+    printf("\n");
 }
 
 void show_taskList(List l){
