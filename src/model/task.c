@@ -36,7 +36,25 @@ Request get_task_request(Task t){
 int get_task_number(Task t){
     return t->task_number;
 }
+char * getInFile(Task t){
+    char * str = getCommand(get_task_request(t));
+    char * seped;
+    strsep(&str,";");
+    seped = strsep(&str,";"); //inputfile
 
+    return strdup(seped);
+}
+
+char * getOutFile(Task t){
+    char * str = getCommand(get_task_request(t));
+    char * seped;
+    strsep(&str,";");
+    strsep(&str,";");
+    seped = strsep(&str,";"); //inputfile
+
+    return strdup(seped);
+
+}
 void show_task(Task t){
     char * comand = getCommand(get_task_request(t));
     printf("task #%d: ",get_task_number(t));
@@ -49,7 +67,7 @@ void show_task(Task t){
 
 void show_taskList(List l){
     int size = get_sizel(l);
-    for(int i = 0;i<size;i++){
+    for(int i = 0;i<size && l;i++){
         Task t = (Task) getValue(l,i);
         show_task(t);
     }

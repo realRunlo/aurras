@@ -25,7 +25,11 @@ int get_max(Filter f);
 
 void update_runingFilters(List filters,Task t,int op);
 
+void update_runingFilter(List filters,Filter filter,int op);
+
 int canUse_filter(List filters,char * f_name);
+
+List creatExecsQueque(List filters,Task t);
 
 void show_filter(Filter f);
 

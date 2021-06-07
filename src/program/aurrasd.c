@@ -32,6 +32,8 @@ int main(int argc,char * argv[]){
     List filters; 
     List waiting_queque = NULL;
     List runing_queque = NULL;
+    List filters_toExec = NULL;
+    int save_1;
     int task_counter = 1;
     int r_size;
     char * filters_folder;
@@ -64,53 +66,65 @@ int main(int argc,char * argv[]){
     while((r_size = read(c2s_pipe,&buffer,1024)) > 0){
 
         Request req = toReq(buffer); //read request from the pipe
-        if(strcmp(getCommand(req),"status") == 0 ){
+        char * req_command = getCommand(req); 
+        if(strcmp(req_command,"status") == 0 ){
             s2c_pipe = open(getId(req),O_WRONLY);
+            save_1 = dup(1);
             dup2(s2c_pipe,1);
             show_taskList(runing_queque);
             show_filterList(filters);
+            dup2(save_1,1);
             close(s2c_pipe);
             kill(atoi(getId(req)),SIGINT); //closes client after printing status
-        }else{
+        }else if (strcmp(strsep(&req_command,";"),"transform")==0) {
             Task t = create_task(task_counter,req);
             task_counter++;
 
             s2c_pipe = open(getId(req),O_WRONLY);
             waiting_queque = push(&waiting_queque,t);
-            write(s2c_pipe,"pending\n",12);
-
+            write(s2c_pipe,"pending...\n",12);
+            
             if(canRun(t,filters)){
                 t = (Task) getValue(waiting_queque,0);
+                write(s2c_pipe,"processing...\n",15);
+                waiting_queque = pop(waiting_queque);// remove from waiting queque
+                filters_toExec = creatExecsQueque(filters,t); //creats list of filters to aply
                 runing_queque = push(&runing_queque,t); // add to the runing queque
-                waiting_queque = pop(waiting_queque); // remove from waiting
                 update_runingFilters(filters,t,0);
-                update_runingFilters(filters,t,1);
                 
-                switch (fork())
-                {
-                case -1:
-                    perror("fork");
-                    break;
-                case 0:
-                    req = get_task_request(t);
-                    write(s2c_pipe,"processing...",14);
-                    //execs etc....
-                    sleep(10);
-                    runing_queque = pop(runing_queque);
- 
-                default:
-              
-                    // children will exec so doesnt need waiting
-                    break;
+                if(fork()){
+                    int n_filtersToExec = get_sizel(filters_toExec);
+                    int pids[n_filtersToExec];
+                    int pid;
+                    for(int i=0;i<n_filtersToExec;i++){//launch all de execs
+                        Filter exF = (Filter) getValue(filters_toExec,0);
+                        char * execName = get_exec_name(exF);
+                        char * inFile = getInFile(t);
+                        char * outFile = getOutFile(t);
+                        filters_toExec = pop(filters_toExec);
+                    
+                        if((pid = fork())==0){
+                            execlp(execName,execName,inFile,outFile,NULL);
+                        }
+                        pids[i] = pid; //store pid of the processes launched to exec
+                    }
+
+                    //wait for all the execs
+                    for (int i = 0; i < n_filtersToExec; ++i) {
+                        int status;
+                        while (-1 == waitpid(pids[i], &status, 0)); 
+                    }
+
+                    /*
+                        NEED to find a way for updating status in the father process
+                    */
+                    update_runingFilters(filters,t,1);
                 }
-            }
+                //limpar a lista de filtros para execs
+                
+            } 
             
-     
         }
-
-
     }
-
-
     return 0;
 }

@@ -12,6 +12,8 @@ List pop(List l);
 
 int get_sizel(List l);
 
+List *get_l_next(List l);
+
 void * getValue(List l,int pos);
 
 

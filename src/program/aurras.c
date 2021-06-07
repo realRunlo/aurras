@@ -8,9 +8,8 @@
 
 #define BUFFSIZE 1024
 
-
 /* Client, to run client ./aurras -> show how to use, ./aurras status -> show status , ./aurras transform [....] -> submit request */
-int main(int argc,char * argv[]){
+int main(int argc,char * argv[]){   
     int size_read;
     char pid[50];
     char * request_message;
@@ -28,11 +27,12 @@ int main(int argc,char * argv[]){
 
     if(strcmp(argv[1],"status") != 0 && strcmp(argv[1],"transform") !=0 ){
         printf("Invalid mode\n");
-        _exit(1);
+        _exit(-1);
     }
 
     if(strcmp(argv[1],"transform") == 0 && argc < 5){
         printf("Not enougth arguments\n");
+        _exit(-1);
     }
 
     if(mkfifo(pid,0666) == -1){ // create pipe for READING anwser from the server
@@ -49,11 +49,12 @@ int main(int argc,char * argv[]){
     request_message = strdup(req_toString(req));
     
     write(c2s_pipe,request_message,strlen(request_message)+1); // send the request message to the server
-
-    int s2c_pipe = open(pid,O_RDONLY); // opens pipe for READING anwser from the server
-
     
-    while((size_read = read(s2c_pipe,&buff,BUFFSIZE)) != EOF){
+    int s2c_pipe = open(pid,O_RDONLY); // opens pipe for READING anwser from the server
+    
+    
+    
+    while((size_read = read(s2c_pipe,&buff,BUFFSIZE)) > 0){
        write(1,buff,size_read);
     }
 

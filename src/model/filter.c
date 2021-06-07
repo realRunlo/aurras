@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "model/filter.h"
+#include "model/task.h"
 
 struct filter{
     char * name;
@@ -110,9 +111,27 @@ void update_runingFilters(List filters,Task t,int op){ // op -> 0 add runing | 1
                 
             }
         }
-
     }
 }
+
+void update_runingFilter(List filters,Filter filter,int op){ // op -> 0 add runing | 1 dec running
+        for(int i = 0;i<get_sizel(filters);i++){
+            Filter f = (Filter) getValue(filters,i);
+            if(strcmp(f->name,filter->name)==0){
+                if(op==0){
+                    inc_runing(f);
+                }else{
+                    dec_runing(f);
+                }
+                
+            }
+        }
+}
+
+
+
+
+
 
 int canUse_filter(List filters,char * f_name){
     for(int i = 0;i<get_sizel(filters);i++){
@@ -122,6 +141,34 @@ int canUse_filter(List filters,char * f_name){
         }
     }
     return 1;
+}
+
+/**
+ * @brief Creates list with the filters to exec
+ * 
+ * @param filters 
+ * @param t 
+ * @return List 
+ */
+List creatExecsQueque(List filters,Task t){
+    List execsQueque = initList();
+    Request req = get_task_request(t);
+    char * line = getCommand(req);
+    strsep(&line,";"); //transform
+    strsep(&line,";"); //input
+    strsep(&line,";"); //output
+    char * seped;
+    while((seped = strsep(&line,";"))){
+        for(int i = 0;i<get_sizel(filters);i++){
+            Filter f = (Filter) getValue(filters,i);
+            if(strcmp(f->name,seped)==0){
+                push(&execsQueque,f);  
+            }
+        }
+
+    }
+    return execsQueque;
+
 }
 
 void show_filter(Filter f){

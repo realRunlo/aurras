@@ -16,6 +16,10 @@ int get_task_number(Task t);
 void set_task_request(Task t, Request req);
 Request get_task_request(Task t);
 
+char * getInFile(Task t);
+
+char * getOutFile(Task t);
+
 void show_task(Task t);
 
 void show_taskList(List l);
