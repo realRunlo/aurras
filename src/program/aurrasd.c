@@ -91,21 +91,82 @@ int main(int argc,char * argv[]){
                 filters_toExec = creatExecsQueque(filters,t); //creats list of filters to aply
                 runing_queque = push(&runing_queque,t); // add to the runing queque
                 update_runingFilters(filters,t,0);
+
+                int inFp = open(getInFile(t),O_RDONLY,0666);
+                int outFp = open(getOutFile(t),O_CREAT | O_WRONLY,0666);
+                
                 
                 if(fork()){
                     int n_filtersToExec = get_sizel(filters_toExec);
                     int pids[n_filtersToExec];
-                    int pid;
+                    int pid,res_pipe=0;
+                    int arrayPipes[n_filtersToExec-1][2];
+
                     for(int i=0;i<n_filtersToExec;i++){//launch all de execs
                         Filter exF = (Filter) getValue(filters_toExec,0);
                         char * execName = get_exec_name(exF);
-                        char * inFile = getInFile(t);
-                        char * outFile = getOutFile(t);
                         filters_toExec = pop(filters_toExec);
-                    
-                        if((pid = fork())==0){
-                            execlp(execName,execName,inFile,outFile,NULL);
+
+                        if(i==0){ // first exec
+                            pipe(arrayPipes[i]);
+                            if(res_pipe==-1){
+                             printf("Error pipe %d:",i);
+                            }
+
+                            switch (pid = fork())
+                            {
+                            case -1:
+                                perror("fork");
+                                _exit(-1);
+                            case 0:
+                                close(arrayPipes[i][0]);
+                                dup2(arrayPipes[i][1],1);
+                                close(arrayPipes[i][1]);
+                                dup2(inFp,0); //exec will receive the input from stdin
+                                execlp(execName,execName,NULL);
+                            default:
+                                close(arrayPipes[i][1]);
+                                
+                            }
+
+                        }else if(i==n_filtersToExec-1){ // last exec
+
+                            switch (pid = fork())
+                            {
+                            case -1:
+                                perror("fork");
+                                _exit(-1);
+                            case 0:
+                                dup2(arrayPipes[i-1][0],0);
+                                close(arrayPipes[i-1][0]);
+                                dup2(outFp,1); // prints de output in the output file
+                                execlp(execName,execName,NULL);
+                            default:
+                                close(arrayPipes[i-1][1]);
+                                
+                            }
+
+                        }else{ // mid execs
+                            switch (pid = fork())
+                            {
+                            case -1:
+                                perror("fork");
+                                _exit(-1);
+                            case 0:
+                                close(arrayPipes[i][0]);
+                                dup2(arrayPipes[i-1][0],0);
+                                close(arrayPipes[i-1][0]);     
+                                dup2(arrayPipes[i][1],1);
+                                close(arrayPipes[i][1]);
+                                execlp(execName,execName,NULL);
+                            default:
+                                close(arrayPipes[i][1]);
+                                close(arrayPipes[i-1][0]);
+                                
+                            }
+
                         }
+                       
                         pids[i] = pid; //store pid of the processes launched to exec
                     }
 
@@ -115,12 +176,15 @@ int main(int argc,char * argv[]){
                         while (-1 == waitpid(pids[i], &status, 0)); 
                     }
 
+
                     /*
                         NEED to find a way for updating status in the father process
+                        THIS UPDATE DOESNT WORK BECAUSE THE MEMORY IS NOT SHARED BETWeNN PROCESSES
                     */
                     update_runingFilters(filters,t,1);
                 }
-                //limpar a lista de filtros para execs
+
+                /* NEDDS TO CLEAR THE FILTERS TO EXEC QUEQUE */
                 
             } 
             
