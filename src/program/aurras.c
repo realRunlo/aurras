@@ -11,11 +11,12 @@
 /* Client, to run client ./aurras -> show how to use, ./aurras status -> show status , ./aurras transform [....] -> submit request */
 int main(int argc,char * argv[]){   
     int size_read;
-    char pid[50];
+    char pipeName[50];
+    char pid[20];
     char * request_message;
     char buff[BUFFSIZE];
-
     sprintf(pid,"%d",getpid());
+    sprintf(pipeName,"tmp/%d",getpid());
 
     if(argc==1){
         printf("Executing modes\n");
@@ -35,11 +36,11 @@ int main(int argc,char * argv[]){
         _exit(-1);
     }
 
-    if(mkfifo(pid,0666) == -1){ // create pipe for READING anwser from the server
+    if(mkfifo(pipeName,0666) == -1){ // create pipe for READING anwser from the server
         perror(pid);
     }
 
-    int c2s_pipe = open("client2server",O_WRONLY); // open pipe for WRITING requests to de server
+    int c2s_pipe = open("tmp/client2server",O_WRONLY); // open pipe for WRITING requests to de server
     if(c2s_pipe == -1){
         printf("Server offline...");
         _exit(-1);
@@ -50,7 +51,7 @@ int main(int argc,char * argv[]){
     
     write(c2s_pipe,request_message,strlen(request_message)+1); // send the request message to the server
     
-    int s2c_pipe = open(pid,O_RDONLY); // opens pipe for READING anwser from the server
+    int s2c_pipe = open(pipeName,O_RDONLY); // opens pipe for READING anwser from the server
     
     
     

@@ -20,6 +20,8 @@ char * getInFile(Task t);
 
 char * getOutFile(Task t);
 
+int get_tasks_pos(List tasks,int tNumb);
+
 void show_task(Task t);
 
 void show_taskList(List l);

@@ -45,6 +45,20 @@ char * getInFile(Task t){
     return strdup(seped);
 }
 
+int get_tasks_pos(List tasks,int tNumb){
+   
+    List tmp = tasks;
+    for(int i = 0 ;tmp!=NULL; tmp = *get_l_next(tmp),i++){
+
+        Task t = getValue(tasks,i);
+        if(get_task_number(t) == tNumb){
+            return i;
+        }
+
+    }
+    return -1;
+}
+
 char * getOutFile(Task t){
     char * str = getCommand(get_task_request(t));
     char * seped;

@@ -151,18 +151,18 @@ int canUse_filter(List filters,char * f_name){
  * @return List 
  */
 List creatExecsQueque(List filters,Task t){
-    List execsQueque = initList();
+    List execsQueque = NULL;
     Request req = get_task_request(t);
     char * line = getCommand(req);
     strsep(&line,";"); //transform
-    strsep(&line,";"); //input
-    strsep(&line,";"); //output
+    strsep(&line,";"); //input file
+    strsep(&line,";"); //output file
     char * seped;
     while((seped = strsep(&line,";"))){
         for(int i = 0;i<get_sizel(filters);i++){
             Filter f = (Filter) getValue(filters,i);
             if(strcmp(f->name,seped)==0){
-                push(&execsQueque,f);  
+                execsQueque = push(&execsQueque,f);  
             }
         }
 
