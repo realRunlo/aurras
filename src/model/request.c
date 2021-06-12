@@ -65,14 +65,14 @@ char * req_toString(Request req){
     int size = strlen(getId(req)) + strlen(getCommand(req)) + 2;
     char *str = malloc(sizeof(char) * size);  
 
-    snprintf(str,size,"%s;%s",getId(req),getCommand(req));
+    snprintf(str,size,"%s;%s\n",getId(req),getCommand(req));
     
     return  str;
 }
 
 Request toReq(char * str){
-    char *id = strsep(&str, ";");
-    char *command = strsep(&str, " ");
+    char *id = strdup(strsep(&str,";"));
+    char *command = strdup(strsep(&str,"\n"));
     Request req = init_request(id, command);
 
     return req;

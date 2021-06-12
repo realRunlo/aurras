@@ -64,7 +64,7 @@ char * getOutFile(Task t){
     char * seped;
     strsep(&str,";");
     strsep(&str,";");
-    seped = strsep(&str,";"); //inputfile
+    seped = strsep(&str,";"); //outputfile
 
     return strdup(seped);
 
@@ -80,11 +80,14 @@ void show_task(Task t){
 }
 
 void show_taskList(List l){
+
     int size = get_sizel(l);
-    for(int i = 0;i<size && l;i++){
-        Task t = (Task) getValue(l,i);
+    List tmp = l;
+    for(int i = 0;i<size && tmp;i++){
+        Task t = (Task) getValue(tmp,i);
         show_task(t);
     }
+   
 }
 
 

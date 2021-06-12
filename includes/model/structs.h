@@ -16,7 +16,7 @@ List *get_l_next(List l);
 
 void * getValue(List l,int pos);
 
-void * removeValue(List l,int pos);
+List removeValue(List l,int pos);
 
 
 #endif //___structs_h___

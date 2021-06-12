@@ -176,6 +176,7 @@ void show_filter(Filter f){
 }
 
 void show_filterList(List f_list){
+    if(f_list == NULL) printf("vazio\n");
     for(int i = 0;i<get_sizel(f_list);i++){
         Filter f = getValue(f_list,i);
         show_filter(f);

@@ -26,7 +26,7 @@ int main(int argc,char * argv[]){
     }
 
 
-    if(strcmp(argv[1],"status") != 0 && strcmp(argv[1],"transform") !=0 ){
+    if(strcmp(argv[1],"status") != 0 && strcmp(argv[1],"transform") > 0 ){
         printf("Invalid mode\n");
         _exit(-1);
     }
@@ -53,9 +53,9 @@ int main(int argc,char * argv[]){
     
     int s2c_pipe = open(pipeName,O_RDONLY); // opens pipe for READING anwser from the server
     
+    open(pipeName,O_WRONLY);
     
-    
-    while((size_read = read(s2c_pipe,&buff,BUFFSIZE)) > 0){
+    while((size_read = read(s2c_pipe,&buff,BUFFSIZE)) >0){
        write(1,buff,size_read);
     }
 

@@ -80,19 +80,23 @@ void * getValue(List l,int pos){
     return get_l_value(l);
 }
 
-void * removeValue(List l,int pos){
+List removeValue(List l,int pos){
 
-    if(pos == 0) l = pop(l);
-    else{
+    if(pos == 0){
+        l = *get_l_next(l);
+
+        return l;
+
+    }else{
         List prev = NULL;
         List now = l;
         List next = NULL;
         for(int i=0;l != NULL && i<pos;l = *get_l_next(l),i++){
             prev = l;
-            next = get_l_next(now);
+            next = *get_l_next(now);
         }
         set_l_next(l,next);
-        return get_l_value(now);
+        return l;
 
     }
    
