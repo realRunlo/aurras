@@ -28,7 +28,7 @@ int canRun(Task t,List filters){
     strsep(&line,";"); //input
     strsep(&line,";"); //output
     char * seped;
-    while((seped = strsep(&line,"\n"))){
+    while((seped = strsep(&line,";"))){
         if(!canUse_filter(filters,seped)){ // if can not use filter return false = 0
             return 0;
         }
@@ -65,20 +65,18 @@ void update_handler(int signum){
 void close_handler(int signum){
     close(c2s_pipe);
     remove("tmp/client2server");
-
-    //printf("\nServer offline.\n");
+    printf("\nServer offline.\n");
 }
 
 /* Server, to run server ./aurrasd config-filename filter-folder*/
 int main(int argc,char * argv[]){
     signal(SIGUSR1,update_handler);
-   // signal(SIGINT,close_handler);
+    signal(SIGINT,close_handler);
     pipe(updatePipe);
     pid_father = getpid();
     int task_counter = 1;
     int r_size;
     char * filters_folder;
-    int saveSTIN = dup(0);
     int saveSTDOUT = dup(1);
     int pending;
 
@@ -106,7 +104,7 @@ int main(int argc,char * argv[]){
 
     char buffer[1024];
 
-    while((r_size = read(c2s_pipe,&buffer,1024)) > 0 ){
+    while((r_size = read(c2s_pipe,&buffer,1024)) > 0){
 
         Request req = toReq(buffer); //read request from the pipe
         char * req_command = getCommand(req); 
@@ -133,120 +131,117 @@ int main(int argc,char * argv[]){
             pending = 1;
             while(pending){
                 if(canRun(t,filters)){
-                t = (Task) getValue(waiting_queque,0);
-                write(s2c_pipe,"processing...\n",15);
-                waiting_queque = pop(waiting_queque);// remove from waiting queque
-                filters_toExec = creatExecsQueque(filters,t); //creats list of filters to aply
-                runing_queque = push(&runing_queque,t); // add to the runing queque
-                update_runingFilters(filters,t,0);
+                    t = (Task) getValue(waiting_queque,0);
+                    write(s2c_pipe,"processing...\n",15);
+                    waiting_queque = pop(waiting_queque);// remove from waiting queque
+                    filters_toExec = creatExecsQueque(filters,t); //creats list of filters to aply
+                    runing_queque = push(&runing_queque,t); // add to the runing queque
+                    update_runingFilters(filters,t,0);
 
 
-                int inFp = open(getInFile(t),O_RDONLY);
-                int outFp = open(getOutFile(t),O_CREAT | O_WRONLY,0777);
+                    int inFp = open(getInFile(t),O_RDONLY);
+                    int outFp = open(getOutFile(t),O_CREAT | O_WRONLY,0777);
                 
-                if(fork()==0){
+                    if(fork()==0){
 
-                    close(updatePipe[0]); //close updatePipe for reading
+                       close(updatePipe[0]); //close updatePipe for reading
                     
-                    int n_filtersToExec = get_sizel(filters_toExec);
-                    int pids[n_filtersToExec];
-                    int pid,res_pipe=0;
-                    int arrayPipes[n_filtersToExec-1][2];
+                        int n_filtersToExec = get_sizel(filters_toExec);
+                        int pids[n_filtersToExec];
+                        int pid,res_pipe=0;
+                        int arrayPipes[n_filtersToExec-1][2];
 
-                    for(int i=0;i<n_filtersToExec;i++){//launch all de execs
+                        for(int i=0;i<n_filtersToExec;i++){//launch all de execs
                         
-                        Filter exF = (Filter) getValue(filters_toExec,i);
-                        char * execName = get_exec_name(exF);
-                        char folder[100];
-                        sprintf(folder,"%s/%s",filters_folder,execName);
+                            Filter exF = (Filter) getValue(filters_toExec,i);
+                            char * execName = get_exec_name(exF);
+                            char folder[100];
+                            sprintf(folder,"%s/%s",filters_folder,execName);
 
-                        if(i==0){ // first exec
-                            pipe(arrayPipes[i]);
+                            if(i==0){ // first exec
+                                pipe(arrayPipes[i]);
                             if(res_pipe==-1){
                                 printf("Error pipe %d:",i);
                             }
 
-                            switch (pid = fork())
-                            {
+                                switch (pid = fork())
+                                {
+                                    case -1:
+                                       perror("fork");
+                                        _exit(-1);
+                                    case 0:
+                                        close(arrayPipes[i][0]);
+                                        dup2(inFp,0);
+                                        if(n_filtersToExec==1) dup2(outFp,1);
+                                        else{
+                                            dup2(arrayPipes[i][1],1);
+                                            close(arrayPipes[i][1]);
+                                        } 
+                                        execlp(folder,execName,NULL);
+                                        exit(-1);
+                                    default:
+                                        close(arrayPipes[i][1]);
+                                    }
+
+                            }else if(i==n_filtersToExec-1){ // last exec
+                                switch (pid = fork())
+                                {
                                 case -1:
                                     perror("fork");
                                     _exit(-1);
-                                 case 0:
-                                    close(arrayPipes[i][0]);
-                                    dup2(inFp,0);
-                                    if(n_filtersToExec==1) dup2(outFp,1);
-                                    else{
-                                        dup2(arrayPipes[i][1],1);
-                                        close(arrayPipes[i][1]);
-                                    } 
+                                case 0:
+                                    dup2(arrayPipes[i-1][0],0);
+                                    close(arrayPipes[i-1][0]);
+                                    dup2(outFp,1);
                                     execlp(folder,execName,NULL);
-                                    exit(-1);
+                                    _exit(-1);
+                                default:
+                                    close(arrayPipes[i-1][1]);
+                                }
+                            }else{ // mid execs
+                                pipe(arrayPipes[i]);
+                                switch (pid = fork())
+                                {
+                                case -1:
+                                    perror("fork");
+                                    _exit(-1);
+                                case 0:
+                                    close(arrayPipes[i][0]);
+                                    dup2(arrayPipes[i-1][0],0);
+                                    close(arrayPipes[i-1][0]);     
+                                    dup2(arrayPipes[i][1],1);
+                                    close(arrayPipes[i][1]);
+                                    execlp(folder,execName,NULL);
+                                    _exit(-1);
                                 default:
                                     close(arrayPipes[i][1]);
-                                }
-
-                        }else if(i==n_filtersToExec-1){ // last exec
-                            switch (pid = fork())
-                            {
-                            case -1:
-                                perror("fork");
-                                _exit(-1);
-                            case 0:
-                                dup2(arrayPipes[i-1][0],0);
-                                close(arrayPipes[i-1][0]);
-                                dup2(outFp,1);
-                                execlp(folder,execName,NULL);
-                                _exit(-1);
-                            default:
-                                close(arrayPipes[i-1][1]);
-                            }
-                        }else{ // mid execs
-                            pipe(arrayPipes[i]);
-                            switch (pid = fork())
-                            {
-                            case -1:
-                                perror("fork");
-                                _exit(-1);
-                            case 0:
-                                close(arrayPipes[i][0]);
-                                dup2(arrayPipes[i-1][0],0);
-                                close(arrayPipes[i-1][0]);     
-                                dup2(arrayPipes[i][1],1);
-                                close(arrayPipes[i][1]);
-                                execlp(folder,execName,NULL);
-                                _exit(-1);
-                            default:
-                                close(arrayPipes[i][1]);
-                                close(arrayPipes[i-1][0]);
+                                    close(arrayPipes[i-1][0]);
                                 
+                                }
                             }
+                            pids[i] = pid; //store pid of the processes launched to exec
                         }
-                        pids[i] = pid; //store pid of the processes launched to exec
-                    }
-                    //wait for all the execs
-                    for (int i = 0; i < n_filtersToExec;i++) {
-                        int status;
-                        waitpid(pids[i],&status,0);
-                    }
-                    write(s2c_pipe,"DONE!\n",7);
+                        //wait for all the execs
+                        for (int i = 0; i < n_filtersToExec;i++) {
+                            int status;
+                            waitpid(pids[i],&status,0);
+                        }
+                        write(s2c_pipe,"DONE!\n",7);
                     
-                    char taskNumb[10];
-                    sprintf(taskNumb,"%d",get_task_number(t));
-                    close(updatePipe[0]);
-                    write(updatePipe[1],taskNumb,1);
-                    kill(pid_father,SIGUSR1);
-                    _exit(1);
+                        char taskNumb[10];
+                        sprintf(taskNumb,"%d",get_task_number(t));
+                        close(updatePipe[0]);
+                        write(updatePipe[1],taskNumb,1);
+                        kill(pid_father,SIGUSR1);
+                        _exit(1);
    
-               }
+                    }
                     pending = 0;
                     close(inFp);
                     close(outFp);   
                 
-            } 
-
-            }
-           
-            
+                } 
+            }  
         }
     }
     return 0;
