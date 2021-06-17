@@ -6,8 +6,6 @@ OUT=bin
 OBJ=obj
 PROG=program
 MODEL=model
-VIEW=view
-CONTROLLER=controller
 
 SERVER=$(PROG)/aurrasd
 CLIENT=$(PROG)/aurras
@@ -42,7 +40,7 @@ $(OBJ)/%.o: $(SRC)/%.c $(HEADERS) $(HEADERSD)
 all: directories server client
 
 directories:
-	mkdir -p $(OBJ)/$(CONTROLLER) $(OBJ)/$(VIEW) $(OBJ)/$(MODEL) $(OBJ)/$(PROG) $(OUT)/$(PROG)
+	mkdir -p $(OBJ)/$(MODEL) $(OBJ)/$(PROG) $(OUT)/$(PROG)
 
 server: $(OBJECTSD)
 	$(COMPILER) -o $(OUT)/$(SERVER) $^ $(FLAGS)
