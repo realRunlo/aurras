@@ -33,6 +33,13 @@ ssize_t readln(int fd, char *line, size_t size){
 
 }
 
+
+/**
+ * @brief Load server configs from a file
+ * 
+ * @param filename 
+ * @return List 
+ */
 List load_server_configs(char * filename){
 
     int fd = open(filename,O_RDONLY,0666);

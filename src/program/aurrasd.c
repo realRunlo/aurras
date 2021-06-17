@@ -24,11 +24,11 @@ int s2c_pipe;
 int canRun(Task t,List filters){
     Request req = get_task_request(t);
     char * line = getCommand(req);
-    strsep(&line," "); //transform
-    strsep(&line," "); //input
-    strsep(&line," "); //output
+    strsep(&line,";"); //transform
+    strsep(&line,";"); //input
+    strsep(&line,";"); //output
     char * seped;
-    while((seped = strsep(&line," "))){
+    while((seped = strsep(&line,"\n"))){
         if(!canUse_filter(filters,seped)){ // if can not use filter return false = 0
             return 0;
         }
@@ -39,9 +39,9 @@ int canRun(Task t,List filters){
 
 
 void update_handler(int signum){
-    printf("updating status...\n");
     char buff[100];
     read(updatePipe[0],&buff,1);
+    
 
     int pos = get_tasks_pos(runing_queque,atoi(buff));
     Task t = getValue(runing_queque,pos);
@@ -59,7 +59,6 @@ void update_handler(int signum){
     char filename[100];
     sprintf(filename,"tmp/%s",getId(req));
     remove(filename);
-    printf("updated\n");
     kill(atoi(getId(req)),SIGINT); //terminate client because finisihed processing audio
 }
 
@@ -81,7 +80,7 @@ int main(int argc,char * argv[]){
     char * filters_folder;
     int saveSTIN = dup(0);
     int saveSTDOUT = dup(1);
-
+    int pending;
 
     if(argc<2){
         printf("Not enougth arguments\n");
@@ -107,7 +106,7 @@ int main(int argc,char * argv[]){
 
     char buffer[1024];
 
-    while((r_size = read(c2s_pipe,&buffer,1024)) > 0){
+    while((r_size = read(c2s_pipe,&buffer,1024)) > 0 ){
 
         Request req = toReq(buffer); //read request from the pipe
         char * req_command = getCommand(req); 
@@ -131,8 +130,9 @@ int main(int argc,char * argv[]){
             s2c_pipe = open(pipeName,O_WRONLY);
             waiting_queque = push(&waiting_queque,t);
             write(s2c_pipe,"pending...\n",12);
-
-            if(canRun(t,filters)){
+            pending = 1;
+            while(pending){
+                if(canRun(t,filters)){
                 t = (Task) getValue(waiting_queque,0);
                 write(s2c_pipe,"processing...\n",15);
                 waiting_queque = pop(waiting_queque);// remove from waiting queque
@@ -142,7 +142,7 @@ int main(int argc,char * argv[]){
 
 
                 int inFp = open(getInFile(t),O_RDONLY);
-                int outFp = open(getOutFile(t),O_CREAT | O_WRONLY,0666);
+                int outFp = open(getOutFile(t),O_CREAT | O_WRONLY,0777);
                 
                 if(fork()==0){
 
@@ -183,7 +183,6 @@ int main(int argc,char * argv[]){
                                     exit(-1);
                                 default:
                                     close(arrayPipes[i][1]);
-                                
                                 }
 
                         }else if(i==n_filtersToExec-1){ // last exec
@@ -224,21 +223,12 @@ int main(int argc,char * argv[]){
                         }
                         pids[i] = pid; //store pid of the processes launched to exec
                     }
-            
-                       
-                    printf("waiting for execs to finish\n");
                     //wait for all the execs
                     for (int i = 0; i < n_filtersToExec;i++) {
                         int status;
                         waitpid(pids[i],&status,0);
                     }
-                    printf("finished execs\n");
-
-
-                    /*
-                        NEED to find a way for updating status in the father process
-                        THIS UPDATE DOESNT WORK BECAUSE THE MEMORY IS NOT SHARED BETWeNN PROCESSES
-                    */
+                    write(s2c_pipe,"DONE!\n",7);
                     
                     char taskNumb[10];
                     sprintf(taskNumb,"%d",get_task_number(t));
@@ -247,15 +237,17 @@ int main(int argc,char * argv[]){
                     kill(pid_father,SIGUSR1);
                     _exit(1);
    
-                }
+               }
+                    pending = 0;
                     close(inFp);
-                    close(outFp);
+                    close(outFp);   
                 
             } 
+
+            }
+           
             
         }
     }
-
-
     return 0;
 }

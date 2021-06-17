@@ -4,6 +4,10 @@
 #include "model/filter.h"
 #include "model/task.h"
 
+/**
+ * @brief stores filter info
+ * 
+ */
 struct filter{
     char * name;
     char * exec_name;
@@ -92,6 +96,13 @@ Filter initFFromLine(char * line){
     return f;
 }
 
+/**
+ * @brief Upadate runing filters values given an task, depending on the operation 
+ * 
+ * @param filters 
+ * @param t 
+ * @param op 
+ */
 void update_runingFilters(List filters,Task t,int op){ // op -> 0 add runing | 1 dec running
     Request req = get_task_request(t);
     char * line = getCommand(req);
@@ -114,25 +125,14 @@ void update_runingFilters(List filters,Task t,int op){ // op -> 0 add runing | 1
     }
 }
 
-void update_runingFilter(List filters,Filter filter,int op){ // op -> 0 add runing | 1 dec running
-        for(int i = 0;i<get_sizel(filters);i++){
-            Filter f = (Filter) getValue(filters,i);
-            if(strcmp(f->name,filter->name)==0){
-                if(op==0){
-                    inc_runing(f);
-                }else{
-                    dec_runing(f);
-                }
-                
-            }
-        }
-}
 
-
-
-
-
-
+/**
+ * @brief Checks if a given filter can be used
+ * 
+ * @param filters 
+ * @param f_name 
+ * @return int 
+ */
 int canUse_filter(List filters,char * f_name){
     for(int i = 0;i<get_sizel(filters);i++){
         Filter f = getValue(filters,i);

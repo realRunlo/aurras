@@ -3,7 +3,7 @@ COMPILER=gcc
 INCLUDES=includes
 SRC=src
 OUT=bin
-OBJ=$(OUT)/obj
+OBJ=obj
 PROG=program
 MODEL=model
 VIEW=view
@@ -58,3 +58,6 @@ memcheck:
 
 clean:
 	rm -rf $(OUT)/$(SERVER) $(OUT)/$(CLIENT) $(OBJ)
+
+test:
+	bin/program/aurras transform samples/sample-2-miei.m4a out/tst2.mp3 eco lento baixo

@@ -3,7 +3,10 @@
 #include <string.h>
 #include "model/request.h"
 
-
+/**
+ * @brief Stores the resquest sent from client
+ * 
+ */
 struct request{
 
     char * id; //pid of the client
