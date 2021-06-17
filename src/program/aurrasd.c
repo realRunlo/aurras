@@ -55,11 +55,11 @@ void update_handler(int signum){
     }
 
     free(t);
-    free(req);
     char filename[100];
     sprintf(filename,"tmp/%s",getId(req));
     remove(filename);
     kill(atoi(getId(req)),SIGINT); //terminate client because finisihed processing audio
+    free(req);
 }
 
 void close_handler(int signum){
